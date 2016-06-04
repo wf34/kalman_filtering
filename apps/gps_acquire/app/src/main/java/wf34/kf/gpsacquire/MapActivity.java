@@ -1,5 +1,8 @@
 package wf34.kf.gpsacquire;
 
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -15,6 +18,20 @@ public class MapActivity extends ActionBarActivity {
     private static final String TAG = "MapActivity";
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
+    private boolean can_start;
+    private boolean can_stop;
+    private MenuItem start_button;
+    private MenuItem stop_button;
+
+    private Intent gps_service;
+
+    // TODO: member persistence through SharedPreferences
+
+    public MapActivity() {
+        can_start = true;
+        can_stop = false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,7 +42,22 @@ public class MapActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        start_button = menu.findItem(R.id.action_start);
+        stop_button = menu.findItem(R.id.action_stop);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        start_button.setEnabled(can_start);
+        stop_button.setEnabled(can_stop);
+        super.onPrepareOptionsMenu(menu);
+        return true;
+    }
+
+    private void flip_buttons() {
+        can_start = !can_start;
+        can_stop = !can_stop;
     }
 
     @Override
@@ -34,12 +66,18 @@ public class MapActivity extends ActionBarActivity {
             case R.id.action_start:
                 // User chose the "Settings" item, show the app settings UI...
                 Log.d(TAG, "start");
+                start_service();
+                flip_buttons();
+                invalidateOptionsMenu();
                 return true;
 
             case R.id.action_stop:
                 // User chose the "Favorite" action, mark the current item
                 // as a favorite...
                 Log.d(TAG, "stop");
+                shutdown_service();
+                flip_buttons();
+                invalidateOptionsMenu();
                 return true;
 
             default:
@@ -47,6 +85,15 @@ public class MapActivity extends ActionBarActivity {
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void start_service() {
+        gps_service = new Intent(this, GpsLoggerService.class);
+        startService(gps_service);
+    }
+
+    private void shutdown_service() {
+        stopService(gps_service);
     }
 
 
