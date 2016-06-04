@@ -64,7 +64,6 @@ public class MapActivity extends ActionBarActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_start:
-                // User chose the "Settings" item, show the app settings UI...
                 Log.d(TAG, "start");
                 start_service();
                 flip_buttons();
@@ -72,8 +71,6 @@ public class MapActivity extends ActionBarActivity {
                 return true;
 
             case R.id.action_stop:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
                 Log.d(TAG, "stop");
                 shutdown_service();
                 flip_buttons();
@@ -81,8 +78,6 @@ public class MapActivity extends ActionBarActivity {
                 return true;
 
             default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
     }
