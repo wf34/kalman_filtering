@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "wf34.kf.gpsacqiure"
+        applicationId "wf34.kf.gpsacquire"
         minSdkVersion 15
         targetSdkVersion 22
         versionCode 1

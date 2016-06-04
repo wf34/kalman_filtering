@@ -1,4 +1,4 @@
-package wf34.kf.gpsacqiure;
+package wf34.kf.gpsacquire;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
