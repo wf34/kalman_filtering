@@ -3,4 +3,5 @@
     <string name="title_activity_map">GpsAcquire</string>
     <string name="action_start">Start</string>
     <string name="action_stop">Stop</string>
+    <string name="dump_destination_key">dump_destination_key</string>
 </resources>

@@ -1,9 +1,8 @@
 package wf34.kf.gpsacquire;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -13,6 +12,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.io.File;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class MapActivity extends ActionBarActivity {
     private static final String TAG = "MapActivity";
@@ -82,8 +85,22 @@ public class MapActivity extends ActionBarActivity {
         }
     }
 
+    private String get_destination_folder() {
+        File sdCard = Environment.getExternalStorageDirectory();
+        File folder = new File (sdCard.getAbsolutePath() + "/gps_dumps");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        return folder.getAbsolutePath();
+    }
+
     private void start_service() {
         gps_service = new Intent(this, GpsLoggerService.class);
+        String folder = get_destination_folder();
+        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        String filename = folder + "/" + currentDateTimeString + ".csv";
+        gps_service.putExtra(getResources().getString(R.string.dump_destination_key),
+                             filename);
         startService(gps_service);
     }
 
