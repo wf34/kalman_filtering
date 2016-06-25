@@ -44,8 +44,8 @@ public class GpsLoggerService extends Service implements LocationListener {
         LocationManager location_manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         String[] data = {"time", "longitude", "latitude"};
         writer.writeNext(data);
-        location_manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-        location_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        location_manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this); //GPS_
+        location_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         Toast.makeText(this, "service started", Toast.LENGTH_SHORT).show();
         return START_STICKY;
     }

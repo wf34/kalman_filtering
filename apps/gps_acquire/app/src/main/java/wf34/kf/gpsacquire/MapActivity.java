@@ -1,6 +1,7 @@
 package wf34.kf.gpsacquire;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
@@ -8,14 +9,24 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.opencsv.CSVReader;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+
+//import com.opencsv.CSVReader;
 
 public class MapActivity extends ActionBarActivity {
     private static final String TAG = "MapActivity";
@@ -23,15 +34,21 @@ public class MapActivity extends ActionBarActivity {
 
     private boolean can_start;
     private boolean can_stop;
+    private boolean can_choose;
     private MenuItem start_button;
     private MenuItem stop_button;
+    private MenuItem choose_button;
 
     private Intent gps_service;
+
+    private ArrayList<Polyline> polylines = new ArrayList<>();
+    private ArrayList<LatLng> original_points = new ArrayList<>();
 
     // TODO: member persistence through SharedPreferences
 
     public MapActivity() {
         can_start = true;
+        can_choose = true;
         can_stop = false;
     }
 
@@ -47,6 +64,7 @@ public class MapActivity extends ActionBarActivity {
         getMenuInflater().inflate(R.menu.main, menu);
         start_button = menu.findItem(R.id.action_start);
         stop_button = menu.findItem(R.id.action_stop);
+        choose_button = menu.findItem(R.id.action_choose);
         return true;
     }
 
@@ -54,6 +72,7 @@ public class MapActivity extends ActionBarActivity {
     public boolean onPrepareOptionsMenu(Menu menu){
         start_button.setEnabled(can_start);
         stop_button.setEnabled(can_stop);
+        choose_button.setEnabled(can_choose);
         super.onPrepareOptionsMenu(menu);
         return true;
     }
@@ -61,6 +80,7 @@ public class MapActivity extends ActionBarActivity {
     private void flip_buttons() {
         can_start = !can_start;
         can_stop = !can_stop;
+        can_choose = !can_choose;
     }
 
     @Override
@@ -80,9 +100,49 @@ public class MapActivity extends ActionBarActivity {
                 invalidateOptionsMenu();
                 return true;
 
+            case R.id.action_choose:
+                Log.d(TAG, "choose");
+                draw_line("2016.06.14_21.42.csv"); //  "2016.06.11_21.07.csv"
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void draw_line(String filename) {
+        for(Polyline polyline : polylines) {
+            polyline.remove();
+        }
+        original_points.clear();
+
+        String filepath = get_destination_folder() + "/" + filename;
+        File file = new File(filepath);
+        String next[];
+        try {
+            CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file)));
+            reader.readNext(); // header
+            for(;;) {
+                next = reader.readNext();
+                if(next != null) {
+                    original_points.add(new LatLng(Double.parseDouble(next[2]),
+                                                   Double.parseDouble(next[1])));
+                } else {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        PolylineOptions polyLineOptions = new PolylineOptions();
+        polyLineOptions.addAll(original_points);
+        polyLineOptions.width(2);
+        polyLineOptions.color(Color.BLUE);
+        Polyline polyline = mMap.addPolyline(polyLineOptions);
+        polylines.add(polyline);
+        mMap.addMarker(new MarkerOptions().position(original_points.get(0))
+                                          .title("Start"));
+        mMap.addMarker(new MarkerOptions().position(original_points.get(original_points.size() - 1))
+                .title("Finish"));
     }
 
     private String get_destination_folder() {
@@ -150,6 +210,6 @@ public class MapActivity extends ActionBarActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(55.7961664, 37.6009312), 14.0f));
     }
 }

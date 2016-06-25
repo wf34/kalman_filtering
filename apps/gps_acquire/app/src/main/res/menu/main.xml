@@ -4,12 +4,16 @@
 
         <item
             android:id="@+id/action_start"
-            android:icon="@drawable/start"
+            android:icon="@android:drawable/ic_media_play"
             android:title="@string/action_start"
             app:showAsAction="always" />
 
         <item android:id="@+id/action_stop"
-            android:icon="@drawable/stop"
+            android:icon="@android:drawable/ic_media_pause"
             android:title="@string/action_stop"
             app:showAsAction="always" />
+        <item android:id="@+id/action_choose"
+        android:icon="@android:drawable/ic_menu_set_as"
+        android:title="@string/action_stop"
+        app:showAsAction="always" />
 </menu>
