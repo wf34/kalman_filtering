@@ -3,6 +3,7 @@ package wf34.kf.gpsacquire;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -11,18 +12,23 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.opencsv.CSVWriter;
 
 import java.io.FileWriter;
 import java.io.IOException;
 
 
-public class GpsLoggerService extends Service implements LocationListener {
+public class GpsLoggerService extends Service implements GpsStatus.NmeaListener, LocationListener {
     private CSVWriter writer;
+    private Nmea nmea_parser;
+    private LocationManager location_manager;
 
     @Override
     public void onCreate() {
         writer = null;
+        nmea_parser = null;
+        location_manager = null;
     }
 
     @Override
@@ -41,12 +47,14 @@ public class GpsLoggerService extends Service implements LocationListener {
         } else {
             throw new IllegalArgumentException("extras were not provided");
         }
-        LocationManager location_manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        String[] data = {"time", "longitude", "latitude"};
+        String[] data = {"time", "latitude", "longitude"};
         writer.writeNext(data);
-        location_manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this); //GPS_
-        location_manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         Toast.makeText(this, "service started", Toast.LENGTH_SHORT).show();
+        nmea_parser = new Nmea();
+        location_manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        location_manager.addNmeaListener(this);
+        location_manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this); //NETWORK_
+        location_manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         return START_STICKY;
     }
 
@@ -57,6 +65,9 @@ public class GpsLoggerService extends Service implements LocationListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        location_manager.removeUpdates(this);
+        location_manager.removeNmeaListener(this);
+        location_manager = null;
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
@@ -67,13 +78,7 @@ public class GpsLoggerService extends Service implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        double longitude = location.getLongitude();
-        double latitude = location.getLatitude();
-        Log.d(this.getClass().toString(), "service running" + longitude + " " + latitude);
-        String[] current_data = {Long.toString(System.currentTimeMillis()),
-                Double.toString(longitude),
-                Double.toString(latitude)};
-        writer.writeNext(current_data);
+        Log.d(this.getClass().toString(), "loc service running");
     }
 
     @Override
@@ -86,5 +91,20 @@ public class GpsLoggerService extends Service implements LocationListener {
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    @Override
+    public void onNmeaReceived(long timestamp, String message) {
+        Log.d(this.getClass().toString(), message);
+        Nmea.GPSPosition position = nmea_parser.parse(message);
+
+        double latitude = position.lat;
+        double longitude = position.lon;
+
+        // Log.d(this.getClass().toString(), "service running "  + latitude + " " + longitude);
+        String[] current_data = {Long.toString(System.currentTimeMillis()),
+                Double.toString(latitude),
+                Double.toString(longitude)};
+        writer.writeNext(current_data);
     }
 }

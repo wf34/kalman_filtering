@@ -12,6 +12,8 @@ import android.view.MenuItem;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -23,10 +25,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-//import com.opencsv.CSVReader;
 
 public class MapActivity extends ActionBarActivity {
     private static final String TAG = "MapActivity";
@@ -43,6 +45,7 @@ public class MapActivity extends ActionBarActivity {
 
     private ArrayList<Polyline> polylines = new ArrayList<>();
     private ArrayList<LatLng> original_points = new ArrayList<>();
+    private ArrayList<Circle> circles = new ArrayList<>();
 
     // TODO: member persistence through SharedPreferences
 
@@ -102,7 +105,7 @@ public class MapActivity extends ActionBarActivity {
 
             case R.id.action_choose:
                 Log.d(TAG, "choose");
-                draw_line("2016.06.14_21.42.csv"); //  "2016.06.11_21.07.csv"
+                draw_line("2016_07_02_04_35_56.csv"); //  "2016.06.11_21.07.csv"
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -113,6 +116,9 @@ public class MapActivity extends ActionBarActivity {
         for(Polyline polyline : polylines) {
             polyline.remove();
         }
+        for(Circle circle : circles) {
+            circle.remove();
+        }
         original_points.clear();
 
         String filepath = get_destination_folder() + "/" + filename;
@@ -121,11 +127,24 @@ public class MapActivity extends ActionBarActivity {
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file)));
             reader.readNext(); // header
+            int counter = 0;
             for(;;) {
                 next = reader.readNext();
                 if(next != null) {
-                    original_points.add(new LatLng(Double.parseDouble(next[2]),
-                                                   Double.parseDouble(next[1])));
+                    LatLng gps_pose = new LatLng(Double.parseDouble(next[1]),
+                                                 Double.parseDouble(next[2]));
+                    original_points.add(gps_pose);
+                    if (0 == counter % 100) {
+                        counter = 0;
+                        Circle circle = mMap.addCircle(new CircleOptions()
+                                        .center(gps_pose)
+                                        .radius(2)
+                                        .strokeColor(Color.BLUE)
+                                //.fillColor(Color.BLUE)
+                        );
+                        circles.add(circle);
+                    }
+                    counter += 1;
                 } else {
                     break;
                 }
@@ -157,7 +176,8 @@ public class MapActivity extends ActionBarActivity {
     private void start_service() {
         gps_service = new Intent(this, GpsLoggerService.class);
         String folder = get_destination_folder();
-        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+        String currentDateTimeString = format.format(new Date());
         String filename = folder + "/" + currentDateTimeString + ".csv";
         gps_service.putExtra(getResources().getString(R.string.dump_destination_key),
                              filename);
